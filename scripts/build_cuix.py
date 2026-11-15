@@ -9,6 +9,7 @@ packed file installer/BobrovMenu.bundle/Contents/BobrovMenu.cuix is committed as
     python3 scripts/build_cuix.py            # rebuild the committed BobrovMenu.cuix
     python3 scripts/build_cuix.py --check    # fail if BobrovMenu.cuix differs from the sources
     python3 scripts/build_cuix.py --output other.cuix
+    python3 scripts/build_cuix.py --unpack edited.cuix   # replace the sources by a CUIX saved in AutoCAD
 
 Entry order, timestamps and permissions are fixed, so the build is reproducible.
 --check compares the unpacked entries (names, order, bytes), not the compressed
@@ -52,7 +53,7 @@ def source_entries(source=SOURCE):
     if unlisted:
         raise SystemExit(
             "Files in %s are not referenced by _rels/.rels: %s"
-            % (source.relative_to(ROOT), ", ".join(unlisted))
+            % (source, ", ".join(unlisted))
         )
     missing = [name for name in ordered if not (source / name).is_file()]
     if missing:
@@ -78,11 +79,38 @@ def read_entries(path):
         return [(info.filename, package.read(info)) for info in package.infolist()]
 
 
+def unpack(path, source=SOURCE):
+    """Replace the source parts by the entries of a CUIX file (for example one saved by the CUI editor)."""
+    entries = read_entries(path)
+    names = [name for name, _ in entries]
+    if "_rels/.rels" not in names or "[Content_Types].xml" not in names:
+        raise SystemExit("%s is not a CUIX package (no _rels/.rels or [Content_Types].xml)" % path)
+    for name in names:
+        target = (source / name).resolve()
+        if source.resolve() not in target.parents:
+            raise SystemExit("unsafe entry name in %s: %s" % (path, name))
+    for old in sorted(source.rglob("*"), reverse=True):
+        if old.is_file():
+            old.unlink()
+        elif old.is_dir():
+            old.rmdir()
+    for name, data in entries:
+        target = source / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return len(entries)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--check", action="store_true", help="compare the existing CUIX with the sources")
     parser.add_argument("--output", type=Path, default=OUTPUT, help="CUIX file to write or check")
+    parser.add_argument("--unpack", type=Path, metavar="CUIX", help="replace src/BobrovMenu.cuix by this CUIX file, then rebuild")
     args = parser.parse_args(argv)
+
+    if args.unpack:
+        count = unpack(args.unpack.resolve())
+        print("unpacked %s into %s (%d entries)" % (args.unpack, SOURCE.relative_to(ROOT), count))
 
     entries = source_entries()
     output = args.output.resolve()

@@ -79,6 +79,16 @@ class SourcesTest(unittest.TestCase):
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(build_cuix.read_entries(first), build_cuix.read_entries(CUIX))
 
+    def test_unpack_round_trip(self):
+        # A CUIX saved by the CUI editor is turned back into sources with --unpack.
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp, "src")
+            source.mkdir()
+            Path(source, "stale.cui").write_text("<old />")
+            build_cuix.unpack(CUIX, source)
+            self.assertFalse(Path(source, "stale.cui").exists())
+            self.assertEqual(build_cuix.source_entries(source), build_cuix.read_entries(CUIX))
+
 
 class PackageStructureTest(unittest.TestCase):
     def setUp(self):
