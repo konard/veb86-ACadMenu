@@ -1,0 +1,7 @@
+# Windows batch files must keep CRLF line endings.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+# CUIX parts are packed byte for byte by scripts/build_cuix.py: never convert their line endings.
+src/BobrovMenu.cuix/** -text
+*.cuix binary
+*.png binary

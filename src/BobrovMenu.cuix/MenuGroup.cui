@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<MenuGroup xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="BOBROVMENU" DisplayName="Bobrov">
+  <MacroGroup Name="BOBROVMENU">
+    <MenuMacro UID="ID_BOBROV_XDATAPALETTE">
+      <Macro type="Any">
+        <Revision MajorVersion="23" MinorVersion="1" UserVersion="1" />
+        <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+        <Name xlate="true" UID="XLS_BOBROV_XDATAPALETTE_NAME">Палитра XDATA</Name>
+        <Command>$M=$(if,$(getvar,cmdactive),^C^C)_XDATAPALETTE </Command>
+        <HelpString xlate="true" UID="XLS_BOBROV_XDATAPALETTE_HELP">Показать или скрыть панель «Свойства XDATA» (XDATAPALETTE)</HelpString>
+        <SmallImage Name="BOBROV_XDATAPALETTE_16.png" />
+        <LargeImage Name="BOBROV_XDATAPALETTE_32.png" />
+        <CLICommand>XDATAPALETTE</CLICommand>
+      </Macro>
+    </MenuMacro>
+  </MacroGroup>
+</MenuGroup>

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<CustSection xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FileVersion MajorVersion="0" MinorVersion="6" IncrementalVersion="1" UserVersion="1" />
+  <Header>
+    <CommonConfiguration>
+      <CommonItems>
+        <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+      </CommonItems>
+    </CommonConfiguration>
+  </Header>
+</CustSection>

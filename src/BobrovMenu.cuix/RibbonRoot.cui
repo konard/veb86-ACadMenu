@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<RibbonRoot>
+  <RibbonPanelSourceCollection xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <RibbonPanelSource UID="ID_BOBROV_PANEL_XDATA" Text="Палитра XDATA" HiddenInEditor="false">
+      <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+      <Name xlate="true" UID="XLS_BOBROV_PANEL_XDATA_NAME">Палитра XDATA</Name>
+      <RibbonRow UID="ID_BOBROV_PANEL_XDATA_ROW1">
+        <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+        <RibbonCommandButton UID="ID_BOBROV_RIBBON_XDATAPALETTE" Id="AcRibbonCommandButton" Text="Палитра XDATA" ButtonStyle="LargeWithText" MenuMacroID="ID_BOBROV_XDATAPALETTE" KeyTip="">
+          <TooltipTitle xlate="true" UID="XLS_BOBROV_RIBBON_XDATAPALETTE_TIP">Палитра XDATA</TooltipTitle>
+          <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+        </RibbonCommandButton>
+      </RibbonRow>
+      <RibbonPanelBreak UID="ID_BOBROV_PANEL_XDATA_BREAK" Id="AcRibbonPanelBreak">
+        <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+      </RibbonPanelBreak>
+    </RibbonPanelSource>
+  </RibbonPanelSourceCollection>
+  <RibbonTabSourceCollection>
+    <RibbonTabSource Text="Bobrov" UID="ID_BOBROV_TAB" KeyTip="" DefaultDisplay="AddToWorkspace" WorkspaceBehavior="MergeOrAddTab">
+      <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+      <Name xlate="true" UID="XLS_BOBROV_TAB_NAME">Bobrov</Name>
+      <Alias>ID_BOBROVTAB</Alias>
+      <RibbonPanelSourceReference UID="ID_BOBROV_TAB_PANEL_XDATA" PanelId="ID_BOBROV_PANEL_XDATA" ResizeStyle="Default">
+        <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
+      </RibbonPanelSourceReference>
+    </RibbonTabSource>
+  </RibbonTabSourceCollection>
+</RibbonRoot>
