@@ -1,0 +1,99 @@
+name: Build, test and release BobrovMenu
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: CUIX, bundle and package checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Icons and BobrovMenu.cuix match their sources
+        run: |
+          python3 scripts/make_icons.py --check
+          python3 scripts/build_cuix.py --check
+      - name: Unit tests (CUIX structure, command, menu, ribbon, bundle, archive)
+        timeout-minutes: 5
+        run: python3 -m unittest discover -s tests -v
+
+  package:
+    name: Manual install archive (Windows install.cmd / uninstall.cmd)
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Package BobrovMenu-manual-install-v0.0.${{ github.run_number }}.zip
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: python scripts/package.py --version v0.0.${{ github.run_number }} --commit $env:COMMIT_SHA --output-dir artifacts/release
+      - name: Verify install.cmd and uninstall.cmd against a temporary APPDATA
+        timeout-minutes: 5
+        shell: pwsh
+        run: ./experiments/Test-BobrovMenuManualInstall.ps1 -ManualInstallZipPath artifacts/release/BobrovMenu-manual-install-v0.0.${{ github.run_number }}.zip
+      - name: Write release notes
+        shell: pwsh
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          @"
+          BobrovMenu v0.0.$env:RUN_NUMBER (commit $env:COMMIT_SHA)
+
+          Menu and ribbon tab Bobrov for AutoCAD 2020-2024 x64 with the «Палитра XDATA» button,
+          which runs the XDATAPALETTE command of acadPaletteSetXDATA (installed separately).
+          Partial CUIX in an Autoloader bundle: no .NET, no LISP, no commands at startup.
+
+          BobrovMenu-manual-install-v0.0.$env:RUN_NUMBER.zip - per-user install without administrator rights.
+          Extract the archive and run install.cmd, or copy its AppData folder into %USERPROFILE%.
+          See INSTALL.md in the archive (in Russian).
+          "@ | Set-Content artifacts/release/release-notes.md -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BobrovMenu-release
+          path: artifacts/release/
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: package
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: BobrovMenu-release
+          path: artifacts/release
+      - name: Create the release v0.0.${{ github.run_number }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+          VERSION: v0.0.${{ github.run_number }}
+        run: |
+          gh release create "$VERSION" \
+            "artifacts/release/BobrovMenu-manual-install-$VERSION.zip" \
+            --repo "$REPOSITORY" --target "$COMMIT_SHA" \
+            --title "BobrovMenu $VERSION" --notes-file artifacts/release/release-notes.md
