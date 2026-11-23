@@ -7,7 +7,7 @@
     <Name xlate="true" UID="XLS_BOBROV_POPMENU_NAME">Bobrov</Name>
     <PopMenuItem IsSeparator="false" hasDiesel="false" UID="ID_BOBROV_POPMENU_XDATAPALETTE">
       <ModifiedRev MajorVersion="23" MinorVersion="1" UserVersion="1" />
-      <Name xlate="true" UID="XLS_BOBROV_POPMENU_XDATAPALETTE_NAME">Палитра XDATA</Name>
+      <NameRef UID="XLS_BOBROV_POPMENU_XDATAPALETTE_NAME" xlate="true">Палитра XDATA</NameRef>
       <MenuItem>
         <MacroRef MenuMacroID="ID_BOBROV_XDATAPALETTE" />
       </MenuItem>
