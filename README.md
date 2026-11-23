@@ -15,6 +15,8 @@ AutoCAD загружает частичный `BobrovMenu.cuix` из пакет�
 | Умные выноски | Правила | `_SL_RULES` |
 | База данных | Редактор БД | `_DB_EDIT` |
 
+![Предпросмотр вкладки Bobrov до и после изменения CUIX](docs/screenshots/bobrov-ribbon-comparison.png)
+
 **Палитра XDATA** также доступна через выпадающее меню **Bobrov** при `MENUBAR=1`. Она
 показывает и скрывает палитру «Свойства XDATA». [ТЗ по палитре XDATA](menu-module-spec.md)
 
