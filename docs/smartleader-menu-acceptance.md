@@ -7,6 +7,14 @@ CI проверяет единственную вкладку Bobrov, привя
 установочного архива. Тест установки на Windows заменяет старый пакет с тремя
 DLL меню и проверяет сохранность соседних пакетов.
 
+Чтение вкладки, трёх панелей, кнопок, макросов и имён значков проверено через
+`AcCui.dll` AutoCAD 2020–2024. Для повторения нужны .NET 10 и `AdWindows.dll` рядом с
+`AcCui.dll`.
+
+```bash
+dotnet run experiments/Inspect-BobrovRibbonReader.cs -- /path/to/AcCui.dll installer/BobrovMenu.bundle/Contents/BobrovMenu.cuix
+```
+
 ## Проверка в AutoCAD
 
 1. Возьмите архив из артефакта CI `BobrovMenu-release`. Установите совместимые
