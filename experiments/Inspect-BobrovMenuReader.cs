@@ -1,6 +1,6 @@
 #:property PublishAot=false
 
-// Issue #3. Requires .NET 10 and AutoCAD 2021's AcCui.dll.
+// Issue #3. Requires .NET 10 and AcCui.dll from AutoCAD 2020–2024.
 // Runs the same menu item reader and display-name accessor on the shipped CUIX.
 using System.IO.Compression;
 using System.Reflection;
