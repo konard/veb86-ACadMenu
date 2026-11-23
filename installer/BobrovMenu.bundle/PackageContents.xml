@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Issue #1: AutoCAD Autoloader bundle of the Bobrov menu (%APPDATA%\Autodesk\ApplicationPlugins\BobrovMenu.bundle).
-     It loads one partial CUIX: the Bobrov pull-down menu and the Bobrov ribbon tab with the «Палитра XDATA» button,
-     which runs the XDATAPALETTE command of acadPaletteSetXDATA. No .NET, no LISP, no commands at startup.
-     scripts/package.py sets AppVersion to the release version. -->
-<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="AutoCAD" ProductType="Application" Name="BobrovMenu" AppVersion="0.0.0" ProductCode="{21c5b8be-7ef2-4d0b-9796-84bd8bef7117}" UpgradeCode="{d20d824c-4f5e-40b1-a857-e8a3bc01bdb4}" Description="Меню и вкладка ленты Bobrov: кнопка «Палитра XDATA» для AutoCAD 2020–2024" Author="veb86">
+<!-- scripts/package.py sets AppVersion to the release version. -->
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="AutoCAD" ProductType="Application" Name="BobrovMenu" AppVersion="0.1.0" ProductCode="{21c5b8be-7ef2-4d0b-9796-84bd8bef7117}" UpgradeCode="{d20d824c-4f5e-40b1-a857-e8a3bc01bdb4}" Description="Меню Bobrov и ACadSmartLeader для AutoCAD" Author="veb86">
   <CompanyDetails Name="veb86" Url="https://github.com/veb86/ACadMenu" />
   <Components>
     <ComponentEntry AppName="BobrovMenu" ModuleName="./Contents/BobrovMenu.cuix">
-      <!-- R23.1 = AutoCAD 2020 ... R24.3 = AutoCAD 2024 (same range as acadPaletteSetXDATA); AutoCAD 2025+ is out of scope. -->
+      <!-- Same range as acadPaletteSetXDATA. -->
       <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R23.1" SeriesMax="R24.3" />
     </ComponentEntry>
+  </Components>
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R23.1" SeriesMax="R23.1" />
+    <ComponentEntry AppName="ACadSmartLeaderMenu" AppType=".Net" ModuleName="./Contents/AutoCAD2020/ACadSmartLeaderMenu.dll" LoadOnAutoCADStartup="True" />
+  </Components>
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R24.0" SeriesMax="R24.3" />
+    <ComponentEntry AppName="ACadSmartLeaderMenu" AppType=".Net" ModuleName="./Contents/AutoCAD2021-2024/ACadSmartLeaderMenu.dll" LoadOnAutoCADStartup="True" />
+  </Components>
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R25.0" />
+    <ComponentEntry AppName="ACadSmartLeaderMenu" AppType=".Net" ModuleName="./Contents/AutoCAD2025/ACadSmartLeaderMenu.dll" LoadOnAutoCADStartup="True" />
   </Components>
 </ApplicationPackage>

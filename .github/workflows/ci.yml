@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_VERSION: v0.1.${{ github.run_number }}
+
 jobs:
   test:
     name: CUIX, bundle and package checks
@@ -40,28 +43,37 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Package BobrovMenu-manual-install-v0.0.${{ github.run_number }}.zip
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the SmartLeader menu for all three AutoCAD SDK targets
+        run: dotnet build src/ACadSmartLeaderMenu -c Release -m:1
+      - name: Verify command mapping, selection and menu lifecycle
+        timeout-minutes: 5
+        run: dotnet run --project tests/ACadSmartLeaderMenu.Tests -c Release
+      - name: Package the manual install archive
         env:
           COMMIT_SHA: ${{ github.sha }}
-        run: python scripts/package.py --version v0.0.${{ github.run_number }} --commit $env:COMMIT_SHA --output-dir artifacts/release
+        run: python scripts/package.py --version $env:RELEASE_VERSION --commit $env:COMMIT_SHA --output-dir artifacts/release
       - name: Verify install.cmd and uninstall.cmd against a temporary APPDATA
         timeout-minutes: 5
         shell: pwsh
-        run: ./experiments/Test-BobrovMenuManualInstall.ps1 -ManualInstallZipPath artifacts/release/BobrovMenu-manual-install-v0.0.${{ github.run_number }}.zip
+        run: ./experiments/Test-BobrovMenuManualInstall.ps1 -ManualInstallZipPath "artifacts/release/BobrovMenu-manual-install-$env:RELEASE_VERSION.zip"
       - name: Write release notes
         shell: pwsh
         env:
           COMMIT_SHA: ${{ github.sha }}
-          RUN_NUMBER: ${{ github.run_number }}
         run: |
           @"
-          BobrovMenu v0.0.$env:RUN_NUMBER (commit $env:COMMIT_SHA)
+          BobrovMenu $env:RELEASE_VERSION (commit $env:COMMIT_SHA)
 
           Menu and ribbon tab Bobrov for AutoCAD 2020-2024 x64 with the «Палитра XDATA» button,
           which runs the XDATAPALETTE command of acadPaletteSetXDATA (installed separately).
-          Partial CUIX in an Autoloader bundle: no .NET, no LISP, no commands at startup.
 
-          BobrovMenu-manual-install-v0.0.$env:RUN_NUMBER.zip - per-user install without administrator rights.
+          ACadSmartLeader ribbon tab and XDATA-aware right-click update for AutoCAD 2020,
+          2021-2024 and 2025+ x64. Install or update ACadSmartLeader to 0.1.4 or later separately.
+
+          BobrovMenu-manual-install-$env:RELEASE_VERSION.zip - per-user install without administrator rights.
           Extract the archive and run install.cmd, or copy its AppData folder into %USERPROFILE%.
           See INSTALL.md in the archive (in Russian).
           "@ | Set-Content artifacts/release/release-notes.md -Encoding utf8
@@ -86,14 +98,13 @@ jobs:
         with:
           name: BobrovMenu-release
           path: artifacts/release
-      - name: Create the release v0.0.${{ github.run_number }}
+      - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
-          VERSION: v0.0.${{ github.run_number }}
         run: |
-          gh release create "$VERSION" \
-            "artifacts/release/BobrovMenu-manual-install-$VERSION.zip" \
+          gh release create "$RELEASE_VERSION" \
+            "artifacts/release/BobrovMenu-manual-install-$RELEASE_VERSION.zip" \
             --repo "$REPOSITORY" --target "$COMMIT_SHA" \
-            --title "BobrovMenu $VERSION" --notes-file artifacts/release/release-notes.md
+            --title "BobrovMenu $RELEASE_VERSION" --notes-file artifacts/release/release-notes.md

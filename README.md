@@ -17,10 +17,31 @@
 
 ![Значки 32×32 и 16×16 на светлом и тёмном фоне (увеличено)](docs/screenshots/icons-preview.png)
 
-Реализация — рекомендуемый вариант п. 4 ТЗ: частичный CUIX `BobrovMenu.cuix` в пакете
+Реализация кнопки «Палитра XDATA» — частичный CUIX `BobrovMenu.cuix` в пакете
 автозагрузки `BobrovMenu.bundle`, **без .NET и без LISP**. Меню и вкладку загружает сам AutoCAD,
 поэтому модуль ничего не пишет в командную строку, не запускает команд при запуске и не меняет
 `MENUBAR`, `WSCURRENT`, рабочие пространства и основной CUIX пользователя.
+
+## ACadSmartLeader
+
+В AutoCAD 2020, 2021–2024 и 2025+ x64 пакет добавляет вкладку **ACadSmartLeader** с панелью
+**Умные выноски**. Команды предоставляет отдельно установленный [ACadSmartLeader 0.1.4+](https://github.com/veb86/ACadSmartLeader/releases).
+
+| Кнопка | Глобальная команда |
+| --- | --- |
+| Создать | `_SL_CREATE` |
+| Создать групповую | `_SL_CREATE_GROUP` |
+| Обновить | `_SL_UPDATE` |
+| Правила | `_SL_RULES` |
+
+Для выбранной MLeader с XDATA `BobrovLeader` доступен контекстный пункт **Обновить умные выноски**.
+Оба способа обновления передают предварительное выделение штатной команде `_SL_UPDATE`.
+Если командная строка занята, AutoCAD предлагает завершить текущую команду и повторить действие.
+`SL_MENU_UNLOAD` снимает вкладку и контекстный пункт в текущем сеансе, `SL_MENU_LOAD` загружает их
+снова. Команды выносок доступны из командной строки.
+
+Модуль добавляет меню через .NET API AutoCAD и при обновлении снимает частичную группу
+`ACADSMARTLEADER` версии 0.1.3. Сценарии проверки в AutoCAD описаны в [протоколе приёмки](docs/smartleader-menu-acceptance.md).
 
 ## Установка
 
@@ -35,8 +56,9 @@ CI), распакуйте и запустите `install.cmd`. Подробна�
 
 | Путь | Назначение |
 | --- | --- |
-| `installer/BobrovMenu.bundle/` | пакет как есть: `PackageContents.xml` и `Contents/BobrovMenu.cuix` (готовый CUIX хранится в репозитории) |
+| `installer/BobrovMenu.bundle/` | шаблон пакета: `PackageContents.xml` и готовый `Contents/BobrovMenu.cuix` |
 | `src/BobrovMenu.cuix/` | исходники CUIX — распакованные части (XML `.cui`, значки PNG), из которых собирается `BobrovMenu.cuix` |
+| `src/ACadSmartLeaderMenu/` | меню ACadSmartLeader и проект для трёх линеек AutoCAD |
 | `installer/manual/` | `install.cmd`, `uninstall.cmd`, `INSTALL.md` архива ручной установки |
 | `scripts/build_cuix.py` | собирает `BobrovMenu.cuix` из `src/BobrovMenu.cuix/`, проверяет (`--check`), распаковывает CUIX в исходники (`--unpack`) |
 | `scripts/make_icons.py` | рисует значки 16×16 и 32×32 |
@@ -45,7 +67,7 @@ CI), распакуйте и запустите `install.cmd`. Подробна�
 | `experiments/` | проверка `install.cmd`/`uninstall.cmd` в Windows, превью значков |
 | `docs/acceptance-protocol.md` | протокол приёмки по п. 8 ТЗ |
 
-Нужен только Python 3.8+ (стандартная библиотека).
+Для сборки архива нужны Python 3.8+ и SDK .NET 10. Библиотеки AutoCAD SDK восстанавливаются из NuGet.
 
 ## Сборка и проверка
 
@@ -53,12 +75,13 @@ CI), распакуйте и запустите `install.cmd`. Подробна�
 python3 scripts/make_icons.py --check     # значки совпадают с make_icons.py
 python3 scripts/build_cuix.py --check     # BobrovMenu.cuix совпадает с src/BobrovMenu.cuix
 python3 -m unittest discover -s tests -v  # структура CUIX, команда, меню, лента, пакет, архив
-python3 scripts/package.py --version v0.0.1 --commit "$(git rev-parse HEAD)"  # artifacts/release/*.zip
+dotnet build src/ACadSmartLeaderMenu -c Release -m:1
+dotnet run --project tests/ACadSmartLeaderMenu.Tests -c Release
+python3 scripts/package.py --version v0.1.0 --commit "$(git rev-parse HEAD)"  # artifacts/release/*.zip
 ```
 
-CI (`.github/workflows/ci.yml`) выполняет эти проверки, собирает архив, проверяет `install.cmd` и
-`uninstall.cmd` в Windows на временном `%APPDATA%`, а при push в `main` публикует релиз
-`v0.0.<номер сборки>` с архивом ручной установки.
+CI (`.github/workflows/ci.yml`) выполняет эти проверки, проверяет установку и удаление архива в
+Windows на временном `%APPDATA%`, а при push в `main` публикует релиз `v0.1.<номер сборки>`.
 
 ## Как изменить меню
 

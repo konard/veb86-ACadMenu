@@ -2,6 +2,8 @@
 
 ТЗ: [menu-module-spec.md](../menu-module-spec.md), задача [#1](https://github.com/veb86/ACadMenu/issues/1).
 
+Проверки интерфейса выносок описаны в [отдельном протоколе](smartleader-menu-acceptance.md).
+
 ## Статус
 
 | Часть | Статус |
@@ -19,7 +21,7 @@
 | CUIX — корректный OPC-пакет: ZIP, типы содержимого, связи `_rels/.rels`, `Menu_Package_Info.xml`, корректный XML, уникальные UID, версия частей ≤ 23.1 (AutoCAD 2020) | `PackageStructureTest` | структура как у файлов, сохранённых редактором CUI |
 | Значки 16×16 и 32×32 | `test_icons_are_16_and_32`, `make_icons.py --check` | п. 4 ТЗ |
 | Одна команда «Палитра XDATA», макрос `$M=$(if,$(getvar,cmdactive),^C^C)_XDATAPALETTE `, подсказка | `CommandTest` | пп. 1, 5, 6 ТЗ |
-| Нет `XDATAPALETTE_ON/OFF`, `NETLOAD`, DLL, LISP, `MENUBAR`, `WSCURRENT`, рабочих пространств, команд при запуске | `test_no_forbidden_content`, `test_no_workspaces_are_defined` | пп. 2, 7 ТЗ |
+| CUIX палитры XDATA и его компонент загружают одну кнопку и сохраняют настройки AutoCAD | `test_no_forbidden_content`, `test_no_workspaces_are_defined` | пп. 2, 7 ТЗ |
 | Меню **Bobrov** → «Палитра XDATA»; вкладка **Bobrov** → панель «Палитра XDATA» → большая кнопка | `MenuAndRibbonTest` | п. 1 ТЗ |
 | `PackageContents.xml`: `ComponentEntry` BobrovMenu, `R23.1`–`R24.3`, Win64, новые GUID | `BundleTest` | п. 4 ТЗ |
 | Архив ручной установки: состав, CRLF в `.cmd`, версия | `ManualInstallTest` | п. 9 ТЗ |
