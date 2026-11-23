@@ -9,6 +9,7 @@ of section 8 is in docs/acceptance-protocol.md.
     python3 -m unittest discover -s tests -v
 """
 
+import hashlib
 import re
 import struct
 import sys
@@ -193,14 +194,14 @@ class CommandTest(unittest.TestCase):
 
     def test_no_forbidden_content(self):
         # Spec 2 and 7: only XDATAPALETTE, no DLL/NETLOAD/LISP, no MENUBAR/WSCURRENT changes.
-        bundle = b"".join(cuix_entries().values()) + PACKAGE_CONTENTS.read_bytes()
-        # XML comments only document the package; check what AutoCAD reads.
-        text = re.sub(r"<!--.*?-->", "", bundle.decode("utf-8", "ignore"), flags=re.S).upper()
+        component = ET.parse(PACKAGE_CONTENTS).find("Components/ComponentEntry[@AppName='BobrovMenu']")
+        bobrov = b"".join(cuix_entries().values()) + ET.tostring(component)
+        text = re.sub(r"<!--.*?-->", "", bobrov.decode("utf-8", "ignore"), flags=re.S).upper()
         for word in ("XDATAPALETTE_ON", "XDATAPALETTE_OFF", "NETLOAD", ".DLL", ".LSP", ".FAS", ".VLX",
                      "MENUBAR", "WSCURRENT", "(COMMAND", "(LOAD", "STARTUPCOMMAND", "LOADONAUTOCADSTARTUP",
                      "ACADPALETTESETXDATA"):
             with self.subTest(word=word):
-                self.assertFalse(word in text, "%s must not appear in the bundle" % word)
+                self.assertNotIn(word, text, "%s must not appear in the XDATA menu" % word)
         commands = set(re.findall(r"_([A-Z_]+)", "".join(
             e.text or "" for e in xml("MenuGroup.cui").iter("Command"))))
         self.assertEqual(commands, {"XDATAPALETTE"})
@@ -261,7 +262,7 @@ class BundleTest(unittest.TestCase):
         self.assertEqual(files, ["Contents/BobrovMenu.cuix", "PackageContents.xml"])
 
     def test_component_and_runtime_requirements(self):
-        entries = self.root.findall("Components/ComponentEntry")
+        entries = self.root.findall("Components/ComponentEntry[@AppName='BobrovMenu']")
         self.assertEqual(len(entries), 1)
         entry = entries[0]
         self.assertEqual(entry.get("AppName"), "BobrovMenu")
@@ -275,6 +276,32 @@ class BundleTest(unittest.TestCase):
         for attribute in ("LoadOnAutoCADStartup", "LoadOnCommandInvocation", "LoadReasons"):
             self.assertIsNone(entry.get(attribute))
         self.assertIsNone(entry.find("Commands"))
+
+    def test_smartleader_routes(self):
+        expected = {
+            "AutoCAD2020": ("R23.1", "R23.1"),
+            "AutoCAD2021-2024": ("R24.0", "R24.3"),
+            "AutoCAD2025": ("R25.0", None),
+        }
+        routes = {}
+        for components in self.root.findall("Components"):
+            for entry in components.findall("ComponentEntry"):
+                if entry.get("AppName") == "BobrovMenu":
+                    continue
+                directory = Path(entry.get("ModuleName")).parent.name
+                self.assertNotIn(directory, routes)
+                self.assertEqual(entry.attrib, {
+                    "AppName": "ACadSmartLeaderMenu",
+                    "AppType": ".Net",
+                    "ModuleName": f"./Contents/{directory}/ACadSmartLeaderMenu.dll",
+                    "LoadOnAutoCADStartup": "True",
+                })
+                self.assertEqual(list(entry), [], "The menu does not register any SmartLeader commands")
+                requirements = components.find("RuntimeRequirements")
+                self.assertEqual(requirements.get("OS"), "Win64")
+                self.assertEqual(requirements.get("Platform"), "AutoCAD*")
+                routes[directory] = requirements.get("SeriesMin"), requirements.get("SeriesMax")
+        self.assertEqual(routes, expected)
 
     def test_new_guids(self):
         codes = [self.root.get("ProductCode"), self.root.get("UpgradeCode")]
@@ -299,15 +326,27 @@ class ManualInstallTest(unittest.TestCase):
 
     def test_archive_layout(self):
         with tempfile.TemporaryDirectory() as tmp:
-            package.main(["--version", "v0.0.42", "--commit", "0123abc", "--output-dir", tmp])
+            builds = {"AutoCAD2020": "net47", "AutoCAD2021-2024": "net48", "AutoCAD2025": "net8.0-windows"}
+            for framework in builds.values():
+                framework_dir = Path(tmp, framework)
+                framework_dir.mkdir()
+                (framework_dir / "ACadSmartLeaderMenu.dll").write_bytes(framework.encode())
+            package.main(["--version", "v0.0.42", "--commit", "0123abc", "--output-dir", tmp, "--menu-build-dir", tmp])
             path = Path(tmp, "BobrovMenu-manual-install-v0.0.42.zip")
             with zipfile.ZipFile(path) as archive:
                 names = archive.namelist()
                 prefix = package.BUNDLE_PREFIX
+                menu_builds = {
+                    f"{prefix}Contents/{directory}/ACadSmartLeaderMenu.dll": framework.encode()
+                    for directory, framework in builds.items()
+                }
                 self.assertEqual(sorted(names), sorted([
                     prefix + "PackageContents.xml", prefix + "Contents/BobrovMenu.cuix",
                     "install.cmd", "uninstall.cmd", "INSTALL.md", "release-manifest.txt",
+                    *menu_builds,
                 ]))
+                for name, data in menu_builds.items():
+                    self.assertEqual(archive.read(name), data)
                 self.assertEqual(archive.read(prefix + "Contents/BobrovMenu.cuix"), CUIX.read_bytes())
                 contents = archive.read(prefix + "PackageContents.xml").decode("utf-8")
                 self.assertIn('AppVersion="0.0.42"', contents)
@@ -317,6 +356,21 @@ class ManualInstallTest(unittest.TestCase):
                 manifest = archive.read("release-manifest.txt").decode("utf-8")
                 self.assertIn("v0.0.42", manifest)
                 self.assertIn("0123abc", manifest)
+                for name in names:
+                    if name != "release-manifest.txt":
+                        digest = hashlib.sha256(archive.read(name)).hexdigest()
+                        self.assertIn(f"{digest}  {name}", manifest.splitlines())
+                entries = ET.fromstring(contents).findall("Components/ComponentEntry")
+                self.assertCountEqual(
+                    [prefix + entry.get("ModuleName")[2:] for entry in entries],
+                    [prefix + "Contents/BobrovMenu.cuix", *menu_builds],
+                )
+
+    def test_packaging_requires_all_three_builds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(SystemExit, "Missing .*ACadSmartLeaderMenu.dll"):
+                package.main(["--output-dir", tmp, "--menu-build-dir", tmp])
+            self.assertEqual(list(Path(tmp).iterdir()), [])
 
     def test_version_is_validated(self):
         self.assertEqual(package.app_version("v1.2.3"), "1.2.3")

@@ -3,3 +3,5 @@ ci-logs/
 __pycache__/
 *.pyc
 *.cuix.tmp
+**/bin/
+**/obj/
