@@ -222,8 +222,11 @@ class MenuAndRibbonTest(unittest.TestCase):
         self.assertIn("POP1", [a.text for a in menu.findall("Alias")])
         items = menu.findall("PopMenuItem")
         self.assertEqual(len(items), 1)
-        self.assertEqual(items[0].findtext("Name"), BUTTON)
-        self.assertEqual(items[0].find("MenuItem/MacroRef").get("MenuMacroID"), self.macro_id)
+        item = items[0]
+        self.assertEqual(item.get("IsSeparator"), "false")
+        # AutoCAD's PopMenuItem reader uses NameRef for the menu item's label.
+        self.assertEqual(item.findtext("NameRef"), BUTTON)
+        self.assertEqual(item.find("MenuItem/MacroRef").get("MenuMacroID"), self.macro_id)
 
     def test_ribbon_tab_panel_and_large_button(self):
         ribbon = xml("RibbonRoot.cui")

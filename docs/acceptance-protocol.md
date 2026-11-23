@@ -25,6 +25,16 @@
 | Архив ручной установки: состав, CRLF в `.cmd`, версия | `ManualInstallTest` | п. 9 ТЗ |
 | `install.cmd` / `uninstall.cmd` в Windows: копирование, снятие отметки «из интернета», переустановка, удаление только `BobrovMenu.bundle` (плагин остаётся) | `experiments/Test-BobrovMenuManualInstall.ps1` (job `package`) | п. 9 ТЗ, часть проверки 10 |
 
+## Проверка загрузки меню (задача #3)
+
+1. Установите архив BobrovMenu v0.0.1 в тестовом профиле. Запустите AutoCAD и проверьте в истории
+   команд (`F2`) наличие строки «Ошибка при загрузке элемента меню: BOBROVMENU:Bobrov».
+2. Закройте AutoCAD, обновите BobrovMenu через `install.cmd` из проверяемого архива и снова
+   запустите AutoCAD. Убедитесь, что строка ошибки отсутствует в истории нового сеанса.
+3. При `MENUBAR` = `1` откройте меню **Bobrov** и нажмите **Палитра XDATA**. С установленным
+   `acadPaletteSetXDATA` палитра должна открыться. Кнопка **Палитра XDATA** на ленте **Bobrov**
+   должна её скрыть.
+
 ## Ручная приёмка в AutoCAD
 
 Условия: установлены `acadPaletteSetXDATA.bundle` и `BobrovMenu.bundle` (архив
